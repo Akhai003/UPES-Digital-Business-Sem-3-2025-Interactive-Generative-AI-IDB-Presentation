@@ -475,6 +475,53 @@
             transition: 0.3s; position: relative; z-index: 1001;
         }
         .replay-btn:hover { background: var(--c-volt); color: black; }
+        
+        /* =============================================================================
+           5.5. VIEW SOURCE BUTTON (NEW)
+           ============================================================================= */
+        .source-btn {
+            margin-top: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 30px;
+            border: 1px solid var(--c-volt); /* Nike Volt Border */
+            color: var(--c-volt);
+            font-family: var(--f-tech);
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.15em;
+            text-decoration: none;
+            text-transform: uppercase;
+            background: rgba(0,0,0,0.5);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        /* The Sliding Fill Animation */
+        .source-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%; height: 0%;
+            background: var(--c-volt);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: -1;
+        }
+
+        /* Hover State */
+        .source-btn:hover {
+            color: black; /* Text turns black for contrast */
+            box-shadow: 0 0 30px rgba(212, 248, 36, 0.4); /* Glowing effect */
+            transform: translateY(-3px);
+            border-color: var(--c-volt);
+        }
+
+        .source-btn:hover::after {
+            height: 100%; /* Fills the button up */
+        }
 
         /* =============================================================================
            6. LOADER
@@ -558,6 +605,11 @@
                 <div class="col-span-6 glass-panel split-anim" style="margin-top: 4rem; --hover-color:#D4F824;">
                     <h2 class="t-h2" style="font-size: 2rem;">NIKE'S DIGITAL TRANSFORMATION</h2>
                     <p class="t-body">A comprehensive analysis of how Nike evolved from a sportswear manufacturer into a technology-driven global brand ecosystem.</p>
+                    
+                    <a href="https://akhai003.github.io/UPES-Digital-Business-Sem-3-2025-Interactive-Generative-AI-IDB-Presentation/IDB%20Raw%20Code.html" target="_blank" class="source-btn">
+                        <i class="fa-solid fa-code"></i> VIEW SOURCE CODE
+                    </a>
+
                 </div>
             </div>
         </section>
