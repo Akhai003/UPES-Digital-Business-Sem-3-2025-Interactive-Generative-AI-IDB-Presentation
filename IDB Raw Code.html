@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REPORT: OMEGA SOURCE | CLASSIFIED</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <style>
+        /* =============================================================================
+           CORE THEME: CRIMSON & GOLD (NO GREEN/BLUE)
+           ============================================================================= */
+        :root {
+            --bg-deep: #050202;
+            --bg-panel: rgba(20, 5, 5, 0.85);
+            --c-primary: #FF2A2A; /* Crimson Red */
+            --c-secondary: #FFD700; /* Gold */
+            --c-text: #e0e0e0;
+            --c-dim: #554444;
+            
+            --f-tech: 'Rajdhani', sans-serif;
+            --f-mono: 'Share Tech Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--c-text);
+            font-family: var(--f-tech);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* CANVAS BACKGROUND */
+        #bg-canvas {
+            position: fixed; top: 0; left: 0; z-index: 0;
+            opacity: 0.4;
+        }
+
+        /* SCANLINES */
+        .scanlines {
+            position: fixed; inset: 0; pointer-events: none; z-index: 2;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(255,0,0,0.05) 50%, rgba(255,0,0,0.05));
+            background-size: 100% 4px;
+        }
+
+        /* =============================================================================
+           MAIN LAYOUT
+           ============================================================================= */
+        .dossier-container {
+            position: relative; z-index: 10;
+            width: 95vw; height: 90vh;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            grid-template-rows: 80px 1fr;
+            gap: 20px;
+        }
+
+        /* HEADER */
+        .header-panel {
+            grid-column: 1 / -1;
+            background: var(--bg-panel);
+            border: 1px solid var(--c-dim);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            border-left: 4px solid var(--c-primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .report-title {
+            font-size: 2rem; letter-spacing: 4px; color: white;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+        /* HOVER EFFECT: RED/GOLD ONLY */
+        .report-title:hover {
+            color: var(--c-primary);
+            text-shadow: 0 0 10px var(--c-primary);
+        }
+
+        .status-badge {
+            font-family: var(--f-mono);
+            background: rgba(255, 42, 42, 0.1);
+            border: 1px solid var(--c-primary);
+            color: var(--c-primary);
+            padding: 5px 15px;
+            font-size: 0.9rem;
+            animation: pulse 2s infinite;
+        }
+
+        /* SIDEBAR (STATS) */
+        .sidebar-panel {
+            grid-row: 2;
+            background: var(--bg-panel);
+            border: 1px solid var(--c-dim);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-block h3 {
+            color: var(--c-dim);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            font-family: var(--f-mono);
+        }
+        .stat-block .value {
+            font-size: 1.8rem;
+            color: white;
+            transition: 0.3s;
+        }
+        .stat-block:hover .value {
+            color: var(--c-secondary); /* Gold Hover */
+            padding-left: 10px;
+        }
+
+        /* CODE VAULT */
+        .code-panel {
+            grid-column: 2;
+            grid-row: 2;
+            background: rgba(0,0,0,0.9);
+            border: 1px solid var(--c-dim);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-width: 0; /* CRITICAL FIX: Prevents Grid blowout */
+        }
+
+        .code-header {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--c-dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            color: var(--c-secondary);
+        }
+
+        .code-scroller {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden; /* Hide horizontal scroll */
+            padding: 20px;
+            font-family: var(--f-mono);
+            font-size: 0.9rem;
+            color: #aaa;
+            line-height: 1.5;
+            white-space: pre-wrap; /* CRITICAL FIX: Wraps text instead of infinite line */
+            word-wrap: break-word; /* Ensure long words break */
+            padding-bottom: 100px; /* Space for button */
+        }
+        
+        /* Custom Scrollbar */
+        .code-scroller::-webkit-scrollbar { width: 8px; }
+        .code-scroller::-webkit-scrollbar-track { background: #111; }
+        .code-scroller::-webkit-scrollbar-thumb { background: var(--c-dim); }
+        .code-scroller::-webkit-scrollbar-thumb:hover { background: var(--c-primary); }
+
+        /* ACTION BUTTON */
+        .action-btn {
+            position: absolute;
+            bottom: 30px; right: 30px;
+            background: black;
+            border: 1px solid var(--c-primary);
+            color: var(--c-primary);
+            padding: 15px 40px;
+            font-family: var(--f-tech);
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            text-transform: uppercase;
+            overflow: hidden;
+            transition: 0.4s;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        .action-btn::before {
+            content:''; position: absolute; top:0; left: -100%; width: 100%; height: 100%;
+            background: var(--c-primary); transition: 0.4s; z-index: -1;
+        }
+
+        .action-btn:hover { color: black; box-shadow: 0 0 30px var(--c-primary); }
+        .action-btn:hover::before { left: 0; }
+
+        /* PREVIEW MODAL (FULL SCREEN) */
+        #preview-modal {
+            position: fixed; inset: 0;
+            background: black;
+            z-index: 2000;
+            transform: translateY(100%);
+            transition: transform 0.8s cubic-bezier(0.86, 0, 0.07, 1);
+        }
+        #preview-modal.active { transform: translateY(0); }
+        
+        #preview-frame { width: 100%; height: 100%; border: none; }
+        
+        .close-preview {
+            position: absolute; top: 20px; right: 20px;
+            background: black; border: 1px solid var(--c-secondary);
+            color: var(--c-secondary); padding: 10px 20px;
+            cursor: pointer; font-family: var(--f-mono);
+            z-index: 2001; transition: 0.3s;
+        }
+        .close-preview:hover { background: var(--c-secondary); color: black; }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; box-shadow: 0 0 5px var(--c-primary); }
+            50% { opacity: 1; box-shadow: 0 0 15px var(--c-primary); }
+            100% { opacity: 0.6; box-shadow: 0 0 5px var(--c-primary); }
+        }
+
+        /* Syntax Highlighting Colors (Custom Red/Gold theme) */
+        .token-tag { color: var(--c-primary); font-weight: bold; }
+        .token-attr { color: #d67676; }
+        .token-string { color: var(--c-secondary); }
+        .token-comment { color: #555; font-style: italic; }
+
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="dossier-container">
+        <!-- HEADER -->
+        <div class="header-panel">
+            <div>
+                <div style="font-size: 0.8rem; color: var(--c-dim);">SECURE ASSET DATABASE</div>
+                <div class="report-title">PROJECT OMEGA</div>
+            </div>
+            <div class="status-badge">CLEARANCE: ALPHA</div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="sidebar-panel">
+            <div class="stat-block">
+                <h3>ASSET TYPE</h3>
+                <div class="value">HTML5 / WEBGL</div>
+            </div>
+            <div class="stat-block">
+                <h3>LINE COUNT</h3>
+                <div class="value">1342</div>
+            </div>
+            <div class="stat-block">
+                <h3>VISUAL ENGINE</h3>
+                <div class="value">THREE.JS</div>
+            </div>
+            <div class="stat-block">
+                <h3>ANIMATION LIB</h3>
+                <div class="value">GSAP 3.12</div>
+            </div>
+            
+            <div style="margin-top: auto; border-top: 1px solid var(--c-dim); padding-top: 1rem;">
+                <div style="color:var(--c-dim); font-size:0.8rem; margin-bottom:10px;">SYSTEM DIAGNOSTIC</div>
+                <div style="height: 4px; background: #333; width: 100%;">
+                    <div style="height:100%; width: 85%; background: var(--c-primary); box-shadow: 0 0 10px var(--c-primary);"></div>
+                </div>
+                <div style="color: var(--c-primary); font-family: var(--f-mono); margin-top: 5px; text-align: right;">STABLE</div>
+            </div>
+        </div>
+
+        <!-- CODE VAULT -->
+        <div class="code-panel">
+            <div class="code-header">
+                <span><i class="fa-solid fa-file-code"></i> source_code.html</span>
+                <span>READ ONLY MODE</span>
+            </div>
+            <div class="code-scroller" id="code-display">
+                <!-- CODE INJECTED VIA JS -->
+            </div>
+            <button class="action-btn" onclick="runSimulation()">
+                <i class="fa-solid fa-play"></i> Initiate Simulation
+            </button>
+        </div>
+    </div>
+
+    <!-- PREVIEW MODAL -->
+    <div id="preview-modal">
+        <button class="close-preview" onclick="closeSimulation()">TERMINATE SESSION</button>
+        <iframe id="preview-frame"></iframe>
+    </div>
+
+    <!-- 
+      IMPORTANT: This script tag holds the escaped raw source.
+      The previous error was caused by JS String conflicts. 
+      This method is safer. 
+    -->
+    <script id="raw-data-source" type="text/plain">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIKE: PROJECT OMEGA | The Digital Transformation</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@200;300;400;600;800&family=Oswald:wght@400;600&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"><\/script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"><\/script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Observer.min.js"><\/script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>
+
+    <style>
+        /* =============================================================================
+           1. CORE VARIABLES & RESET
+           ============================================================================= */
+        :root {
+            --c-bg: #030303;
+            --c-surface: #0a0a0a;
+            --c-surface-glass: rgba(20, 20, 20, 0.4);
+            
+            /* NIKE VOLT & ACCENTS */
+            --c-volt: #D4F824;
+            --c-accent: #FF4500; 
+            --c-blue: #007AFF;
+            
+            --c-text-main: #FFFFFF;
+            --c-text-muted: #888888;
+            
+            --f-display: 'Anton', sans-serif;
+            --f-head: 'Oswald', sans-serif;
+            --f-body: 'Inter', sans-serif;
+            --f-tech: 'Rajdhani', sans-serif;
+
+            --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--c-bg);
+            color: var(--c-text-main);
+            font-family: var(--f-body);
+            overflow: hidden; 
+            width: 100vw; height: 100vh;
+            cursor: none; 
+        }
+
+        img { max-width: 100%; display: block; object-fit: cover; }
+        ul { list-style: none; }
+
+        /* =============================================================================
+           2. TYPOGRAPHY SYSTEM (STRICT STYLE SEPARATION)
+           ============================================================================= */
+        
+        /* --- GROUP 1: "PROJECT OMEGA" IDENTITY (Slide 1 Title & Topic Labels) --- */
+        /* EFFECT: Darker Green Gradient + Volt Border */
+        
+        .t-mega, .t-label {
+            transition: all 0.4s ease;
+            cursor: default;
+            position: relative;
+        }
+
+        .t-mega:hover, .t-label:hover {
+            /* Darker Gradient: Deep Moss -> Volt -> Deep Moss */
+            background: linear-gradient(90deg, #1a3300, #D4F824, #1a3300) !important;
+            background-size: 200% auto !important;
+            
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+            color: transparent !important;
+
+            /* The Outline Border you requested */
+            -webkit-text-stroke: 1px #D4F824 !important;
+
+            /* Subtle Glow */
+            filter: drop-shadow(0 0 5px rgba(212, 248, 36, 0.3));
+            
+            /* Animation */
+            animation: plasmaFlow 3s linear infinite;
+        }
+
+        /* Specific expansion for small topic text */
+        .t-label:hover { letter-spacing: 0.35em; padding-left: 5px; }
+
+        /* Specific expansion for Mega Title */
+        .t-mega:hover { letter-spacing: 0.05em; }
+
+        /* Fix for the existing outline text class on Slide 1 */
+        .t-mega:hover .text-outline {
+            -webkit-text-stroke: 1px #D4F824 !important;
+            color: transparent;
+        }
+
+        @keyframes plasmaFlow {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        /* --- GROUP 2: STANDARD HEADINGS (Slides 2-17) --- */
+        /* EFFECT: Restored "Satisfying Palette" (Solid Color, No Green) */
+        
+        .t-h1, .t-h2 {
+            color: white;
+            transition: all 0.4s ease;
+            cursor: default;
+            position: relative;
+        }
+
+        .t-h1:hover, .t-h2:hover {
+            /* Reset any gradients */
+            background: none !important;
+            -webkit-text-fill-color: initial !important;
+            
+            /* Use the specific color for that slide (Gold, Red, Purple, etc.) */
+            color: var(--hover-color) !important;
+            
+            /* Clean Glow */
+            filter: drop-shadow(0 0 15px var(--hover-color));
+            transform: scale(1.02);
+        }
+
+
+        /* --- Font Definitions --- */
+        .t-mega {
+            font-family: var(--f-display);
+            font-size: clamp(5rem, 10vw, 12rem);
+            line-height: 0.85;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            color: white;
+            will-change: transform;
+        }
+
+        .t-h1 {
+            font-family: var(--f-head);
+            font-size: clamp(3rem, 5vw, 6rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            line-height: 1.1;
+            margin-bottom: 2rem;
+        }
+
+        .t-h2 {
+            font-family: var(--f-head);
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .t-h3 {
+            font-family: var(--f-tech);
+            font-size: 1.5rem;
+            color: var(--c-volt); /* Default fallback */
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .t-body-lg {
+            font-family: var(--f-body);
+            font-size: 1.4rem;
+            line-height: 1.5;
+            color: #d0d0d0;
+            max-width: 60ch;
+        }
+
+        .t-body {
+            font-family: var(--f-body);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--c-text-muted);
+        }
+
+        /* Topic Label Structure */
+        .t-label {
+            font-family: var(--f-tech);
+            color: #666; /* Default Grey */
+            font-size: 1rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .t-label::before { 
+            content: ''; width: 20px; height: 2px; 
+            background: #444; display: block; 
+            transition: all 0.4s ease; 
+        }
+
+        /* Line Animation for Topic Label */
+        .t-label:hover::before {
+            width: 40px;
+            background: #D4F824;
+            box-shadow: 0 0 10px #D4F824;
+        }
+        
+        .justify-center { justify-content: center; }
+
+        .text-outline {
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255,255,255,0.3);
+            transition: -webkit-text-stroke 0.3s ease, color 0.3s ease;
+        }
+
+        .text-center { text-align: center; }
+
+        /* =============================================================================
+           3. UI & HUD ELEMENTS
+           ============================================================================= */
+        .hud-top-left {
+            position: fixed; top: 2rem; left: 3rem; z-index: 100;
+            display: flex; align-items: center; gap: 1rem;
+            mix-blend-mode: exclusion;
+        }
+
+        .hud-slide-counter {
+            position: fixed; bottom: 2rem; right: 3rem; z-index: 100;
+            font-family: var(--f-display); font-size: 4rem;
+            color: rgba(255,255,255,0.1);
+            display: flex; align-items: baseline; gap: 10px;
+            font-variant-numeric: tabular-nums;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .hud-slide-counter:hover { color: var(--c-volt); }
+        .hud-slide-counter .current { color: var(--c-volt); }
+
+        .progress-container {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 4px;
+            background: #111; z-index: 999;
+        }
+        .progress-bar {
+            height: 100%; width: 0%; background: var(--c-volt);
+            box-shadow: 0 0 10px var(--c-volt);
+            transition: width 0.5s var(--ease-out);
+        }
+
+        .scanlines {
+            position: fixed; inset: 0; pointer-events: none; z-index: 900;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            opacity: 0.3;
+        }
+
+        #cursor {
+            position: fixed; top: 0; left: 0; z-index: 9999; pointer-events: none; mix-blend-mode: difference;
+        }
+        .cursor-dot {
+            width: 8px; height: 8px; background: var(--c-volt); border-radius: 50%;
+            position: absolute; transform: translate(-50%, -50%);
+        }
+        .cursor-ring {
+            width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.4); border-radius: 50%;
+            position: absolute; transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, border-color 0.2s;
+        }
+        body.hovering .cursor-ring {
+            width: 70px; height: 70px; border-color: var(--c-volt); background: rgba(212, 248, 36, 0.05);
+        }
+
+        /* =============================================================================
+           3.5. NAVIGATION OVERLAY
+           ============================================================================= */
+        #nav-overlay {
+            position: fixed; inset: 0; z-index: 2000;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        #nav-overlay.active { opacity: 1; pointer-events: all; }
+        
+        .nav-title {
+            font-family: var(--f-tech); color: var(--c-volt); letter-spacing: 3px;
+            margin-bottom: 2rem; text-transform: uppercase; font-size: 1.2rem;
+        }
+
+        .nav-grid {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 1.5rem;
+            max-width: 1000px; width: 90%;
+        }
+
+        .nav-item {
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            background: rgba(255,255,255,0.02);
+        }
+        .nav-item:hover {
+            background: var(--c-volt);
+            border-color: var(--c-volt);
+            transform: scale(1.05);
+        }
+        .nav-num {
+            font-family: var(--f-display); font-size: 2.5rem; color: white;
+            display: block; line-height: 1;
+        }
+        .nav-item:hover .nav-num { color: black; }
+
+        /* =============================================================================
+           4. LAYOUT & GLASSMORPHISM
+           ============================================================================= */
+        .slide-container { position: relative; width: 100%; height: 100vh; }
+
+        .slide-section {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 0 6vw;
+            opacity: 0; visibility: hidden;
+            will-change: transform, opacity;
+        }
+        .slide-section.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        .grid-12 {
+            display: grid; grid-template-columns: repeat(12, 1fr); gap: 2rem;
+            width: 100%; max-width: 1800px; margin: 0 auto;
+        }
+
+        .glass-panel {
+            /* Fallback Color */
+            --hover-color: var(--c-volt);
+            
+            background: rgba(10, 10, 10, 0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px);
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s var(--ease-out);
+        }
+        
+        .glass-panel::before {
+            content:''; position: absolute; top: 0; left: 0; width: 3px; height: 0%;
+            background: var(--hover-color); 
+            transition: height 0.4s ease, background 0.4s ease;
+        }
+
+        .glass-panel:hover {
+            background: rgba(20, 20, 20, 0.9);
+            border-color: var(--hover-color);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 20px var(--hover-color); 
+        }
+        .glass-panel:hover::before { height: 100%; }
+
+        .glass-panel:hover .t-h3,
+        .glass-panel:hover i {
+            color: var(--hover-color) !important;
+        }
+
+        .col-span-2 { grid-column: span 2; }
+        .col-span-3 { grid-column: span 3; }
+        .col-span-4 { grid-column: span 4; }
+        .col-span-5 { grid-column: span 5; }
+        .col-span-6 { grid-column: span 6; }
+        .col-span-7 { grid-column: span 7; }
+        .col-span-8 { grid-column: span 8; }
+        .col-span-12 { grid-column: span 12; }
+
+        /* =============================================================================
+           5. SPECIFIC VISUALS
+           ============================================================================= */
+        .tech-list li {
+            padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; align-items: center; gap: 15px;
+            font-family: var(--f-body); font-size: 1.1rem; color: #ccc;
+        }
+        .tech-list li i { color: var(--c-volt); font-size: 0.9rem; transition: color 0.3s; }
+
+        .chart-container {
+            display: flex; align-items: flex-end; gap: 30px; height: 350px; width: 100%;
+            border-bottom: 1px solid #333; padding-bottom: 1rem;
+        }
+        .bar-wrapper {
+            flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;
+        }
+        .bar-visual {
+            width: 100%; background: #222; position: relative;
+            transform-origin: bottom; transform: scaleY(0); transition: transform 1s var(--ease-out);
+        }
+        .bar-visual.active { background: var(--c-volt); box-shadow: 0 0 30px var(--c-volt-dim); }
+        .bar-value { 
+            font-family: var(--f-head); font-size: 1.5rem; color: white; margin-bottom: 10px; 
+            opacity: 0; transform: translateY(20px); transition: 0.5s 0.8s;
+        }
+        .slide-section.active .bar-visual { transform: scaleY(1); }
+        .slide-section.active .bar-value { opacity: 1; transform: translateY(0); }
+
+        /* SQUAD CARD */
+        .squad-card {
+            --hover-color: var(--c-volt);
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            overflow: hidden;
+        }
+        .squad-bg-icon {
+            position: absolute;
+            top: -20%;
+            right: -20%;
+            font-size: 10rem;
+            opacity: 0.05;
+            color: var(--hover-color);
+            transition: all 0.5s var(--ease-out);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .squad-card:hover .squad-bg-icon {
+            opacity: 0.15;
+            transform: rotate(-15deg) scale(1.3);
+        }
+        .squad-info { 
+            padding: 1.5rem; 
+            position: relative; 
+            z-index: 2;
+        }
+        .squad-role { 
+            color: #666;
+            font-family: var(--f-tech); text-transform: uppercase; font-size: 0.9rem; margin-top: 5px; 
+            transition: color 0.3s;
+        }
+        .squad-card:hover .squad-role { color: var(--hover-color); font-weight: bold; }
+
+        /* EXEC CARD */
+        .exec-card { text-align: center; }
+        .exec-img-box {
+            width: 200px; height: 200px; border-radius: 50%; margin: 0 auto 1.5rem;
+            overflow: hidden; border: 2px solid #333; transition: 0.4s;
+        }
+        .exec-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            filter: grayscale(100%);
+            transition: filter 0.5s ease, transform 0.5s ease;
+        }
+        .exec-card:hover .exec-img-box img {
+            filter: grayscale(0%);
+            transform: scale(1.1);
+        }
+        .exec-card:hover .exec-img-box { border-color: var(--c-volt); box-shadow: 0 0 30px rgba(212, 248, 36, 0.2); }
+
+        /* LOGISTICS IMAGE */
+        .logistics-img {
+            width: 100%; height: 500px; border: 1px solid #333;
+            filter: grayscale(100%);
+            transition: filter 0.5s ease;
+        }
+        .logistics-img:hover {
+            filter: grayscale(0%);
+        }
+
+        .replay-btn {
+            background: transparent; border: 1px solid var(--c-volt); color: var(--c-volt); 
+            padding: 1.5rem 4rem; font-family: var(--f-head); font-size: 1.2rem; 
+            letter-spacing: 2px; text-transform: uppercase; cursor: pointer; 
+            transition: 0.3s; position: relative; z-index: 1001;
+        }
+        .replay-btn:hover { background: var(--c-volt); color: black; }
+
+        /* =============================================================================
+           6. LOADER
+           ============================================================================= */
+        #loader { position: fixed; inset: 0; background: #050505; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .loader-content { text-align: center; position: relative; }
+        .glitch-text { font-family: 'Anton', sans-serif; font-size: 8vw; font-weight: bold; color: white; text-transform: uppercase; letter-spacing: 2px; position: relative; display: inline-block; min-height: 1.2em; }
+        .is-glitching { animation: glitch-shake 0.1s infinite; }
+        .is-glitching::before, .is-glitching::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; background: #050505; }
+        .is-glitching::before { color: #0ff; z-index: -1; clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%); animation: glitch-anim-1 0.3s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .is-glitching::after { color: #f0f; z-index: -2; clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%); animation: glitch-anim-2 0.3s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .dud { color: #D4F824; font-family: monospace; }
+        .is-static { color: white; text-shadow: 0 0 0 transparent; animation: none; transform: none; }
+        .is-static::before, .is-static::after { display: none; }
+        @keyframes glitch-shake { 0% { transform: translate(0); } 20% { transform: translate(-2px, 2px); } 40% { transform: translate(-2px, -2px); } 60% { transform: translate(2px, 2px); } 80% { transform: translate(2px, -2px); } 100% { transform: translate(0); } }
+        @keyframes glitch-anim-1 { 0% { transform: translate(0); } 20% { transform: translate(-5px, 5px); } 40% { transform: translate(-5px, -5px); } 60% { transform: translate(5px, 5px); } 80% { transform: translate(5px, -5px); } 100% { transform: translate(0); } }
+        @keyframes glitch-anim-2 { 0% { transform: translate(0); } 20% { transform: translate(5px, -5px); } 40% { transform: translate(5px, 5px); } 60% { transform: translate(-5px, -5px); } 80% { transform: translate(-5px, 5px); } 100% { transform: translate(0); } }
+        .loader-line-track { width: 300px; height: 3px; background: #333; margin-top: 20px; position: relative; overflow: hidden; margin-left: auto; margin-right: auto; }
+        .loader-line-fill { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: #D4F824; box-shadow: 0 0 15px #D4F824; }
+
+    </style>
+</head>
+<body>
+
+    <div id="shader-container" style="position:fixed; inset:0; z-index:0;"></div>
+    
+    <div class="scanlines"></div>
+
+    <div class="hud-top-left">
+        <i class="fa-brands fa-nike fa-2x" style="color:white;"></i>
+        <div style="font-family: 'Rajdhani'; font-weight:700; letter-spacing:2px; font-size:1.2rem;">PROJECT <span style="color:var(--c-volt)">OMEGA</span></div>
+    </div>
+    
+    <div class="hud-slide-counter" onclick="toggleNav()">
+        <span class="current" id="curr-slide-disp">01</span>
+        <span style="font-size: 2rem;">/ 17</span>
+    </div>
+
+    <div id="nav-overlay">
+        <div class="nav-title">Select Slide Data Node</div>
+        <div class="nav-grid">
+            <div class="nav-item" onclick="jumpTo(0)"><span class="nav-num">01</span></div>
+            <div class="nav-item" onclick="jumpTo(1)"><span class="nav-num">02</span></div>
+            <div class="nav-item" onclick="jumpTo(2)"><span class="nav-num">03</span></div>
+            <div class="nav-item" onclick="jumpTo(3)"><span class="nav-num">04</span></div>
+            <div class="nav-item" onclick="jumpTo(4)"><span class="nav-num">05</span></div>
+            <div class="nav-item" onclick="jumpTo(5)"><span class="nav-num">06</span></div>
+            <div class="nav-item" onclick="jumpTo(6)"><span class="nav-num">07</span></div>
+            <div class="nav-item" onclick="jumpTo(7)"><span class="nav-num">08</span></div>
+            <div class="nav-item" onclick="jumpTo(8)"><span class="nav-num">09</span></div>
+            <div class="nav-item" onclick="jumpTo(9)"><span class="nav-num">10</span></div>
+            <div class="nav-item" onclick="jumpTo(10)"><span class="nav-num">11</span></div>
+            <div class="nav-item" onclick="jumpTo(11)"><span class="nav-num">12</span></div>
+            <div class="nav-item" onclick="jumpTo(12)"><span class="nav-num">13</span></div>
+            <div class="nav-item" onclick="jumpTo(13)"><span class="nav-num">14</span></div>
+            <div class="nav-item" onclick="jumpTo(14)"><span class="nav-num">15</span></div>
+            <div class="nav-item" onclick="jumpTo(15)"><span class="nav-num">16</span></div>
+            <div class="nav-item" onclick="jumpTo(16)"><span class="nav-num">17</span></div>
+        </div>
+    </div>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+    
+    <div id="cursor"><div class="cursor-dot"></div><div class="cursor-ring"></div></div>
+
+    <div id="loader">
+        <div class="loader-content">
+            <div class="glitch-text is-glitching" data-text="INITIALIZING...">INITIALIZING...</div>
+            <div class="loader-line-track"><div class="loader-line-fill"></div></div>
+        </div>
+    </div>
+
+    <div class="slide-container">
+
+        <section class="slide-section active">
+            <div class="grid-12">
+                <div class="col-span-12" style="--hover-color:#D4F824;">
+                    <div class="t-label split-anim" style="--hover-color:#D4F824;">CASE STUDY 2025</div>
+                    <h1 class="t-mega split-anim">FROM SHOES<br><span class="text-outline">TO SOFTWARE</span></h1>
+                </div>
+                <div class="col-span-6 glass-panel split-anim" style="margin-top: 4rem; --hover-color:#D4F824;">
+                    <h2 class="t-h2" style="font-size: 2rem;">NIKE'S DIGITAL TRANSFORMATION</h2>
+                    <p class="t-body">A comprehensive analysis of how Nike evolved from a sportswear manufacturer into a technology-driven global brand ecosystem.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12" style="align-items: center;">
+                <div class="col-span-5" style="--hover-color:#FF4500;">
+                    <div class="t-label split-anim" style="--hover-color:#FF4500;">ORIGIN STORY</div>
+                    <h2 class="t-h1 split-anim">THE <span style="color:var(--c-accent)">LEGACY</span></h2>
+                    <p class="t-body-lg split-anim" style="margin-bottom: 2rem;">Nike began in 1964 as Blue Ribbon Sports. Built on design, branding, and athlete endorsements.</p>
+                    <div class="glass-panel split-anim" style="--hover-color:#FF4500;">
+                        <ul class="tech-list">
+                            <li><i class="fa-solid fa-check"></i> Founded by Phil Knight & Bill Bowerman</li>
+                            <li><i class="fa-solid fa-check"></i> Renamed NIKE, Inc. in 1971</li>
+                            <li><i class="fa-solid fa-globe"></i> Operations in 190+ Countries</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-span-7 split-anim">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop" style="height: 300px; width:100%; border:1px solid #333;" alt="Nike Shoe">
+                        <div style="background: #111; border: 1px solid #333; display:flex; flex-direction:column; justify-content:center; align-items:center; padding: 2rem;">
+                            <i class="fa-solid fa-crown fa-4x" style="color:white; margin-bottom:1rem;"></i>
+                            <div class="t-h3">ICONS</div>
+                            <div class="t-body" style="text-align:center">Jordan. Air Max. Dri-Fit.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12">
+                <div class="col-span-12 split-anim" style="--hover-color:#FF003C;">
+                    <h2 class="t-h1" style="color:#666">THE OLD MODEL</h2>
+                    <h2 class="t-mega" style="font-size: 8rem; color: white;">WHOLESALE</h2>
+                </div>
+                <div class="col-span-4 glass-panel split-anim" style="--hover-color:#cccccc;">
+                    <div class="t-h3">NO DATA</div>
+                    <p class="t-body">Almost no real-time consumer data. Forecasting was reactive based on retailer reports.</p>
+                </div>
+                <div class="col-span-4 glass-panel split-anim" style="--hover-color:#FF4500;">
+                    <div class="t-h3">MIDDLEMEN</div>
+                    <p class="t-body">Dependent on partners like Foot Locker. Limited control over the customer experience.</p>
+                </div>
+                <div class="col-span-4 glass-panel split-anim" style="--hover-color:#FF003C;">
+                    <div class="t-h3">DISCONNECTED</div>
+                    <p class="t-body">A box-moving business, not a relationship business.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12">
+                <div class="col-span-6 split-anim" style="--hover-color:#FF003C;">
+                    <div class="t-label" style="--hover-color:#FF003C;">SYSTEM ALERT</div>
+                    <h2 class="t-h1">THE CRACKS<br>APPEAR</h2>
+                    <p class="t-body-lg">Nike's traditional model weakened due to the "Retail Apocalypse" and agile competitors.</p>
+                </div>
+                <div class="col-span-6">
+                    <div class="glass-panel split-anim" style="border-left: 4px solid var(--c-accent); --hover-color:#FF003C;">
+                        <ul class="tech-list">
+                            <li><i class="fa-solid fa-triangle-exclamation" style="color:var(--c-accent)"></i> Rising Competition (Adidas, UA)</li>
+                            <li><i class="fa-solid fa-triangle-exclamation" style="color:var(--c-accent)"></i> Declining Retail Traffic</li>
+                            <li><i class="fa-solid fa-triangle-exclamation" style="color:var(--c-accent)"></i> Inefficient Supply Chain</li>
+                            <li><i class="fa-solid fa-triangle-exclamation" style="color:var(--c-accent)"></i> Shift to Online Shopping</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12" style="text-align:center;">
+                <div class="col-span-12 split-anim" style="--hover-color:#FF4500;">
+                    <h2 class="t-mega" style="font-size: 7rem;">ADAPT OR DIE</h2>
+                    <p class="t-body-lg" style="margin: 0 auto 3rem;">Nike realized the next era required data, speed, and direct relationships.</p>
+                </div>
+                <div class="col-span-4 glass-panel split-anim" style="--hover-color:#FF4500;">
+                    <i class="fa-solid fa-bolt fa-3x" style="color:var(--c-volt); margin-bottom:1rem;"></i>
+                    <div class="t-h3">SPEED</div>
+                    <p class="t-body">Simplify global supply chain.</p>
+                </div>
+                <div class="col-span-4 glass-panel split-anim" style="--hover-color:#FFFFFF;">
+                    <i class="fa-solid fa-database fa-3x" style="color:var(--c-volt); margin-bottom:1rem;"></i>
+                    <div class="t-h3">INSIGHTS</div>
+                    <p class="t-body">Need for real-time consumer data.</p>
+                </div>
+                <div class="col-span-4 glass-panel split-anim" style="--hover-color:#BD00FF;">
+                    <i class="fa-solid fa-link fa-3x" style="color:var(--c-volt); margin-bottom:1rem;"></i>
+                    <div class="t-h3">ECOSYSTEM</div>
+                    <p class="t-body">Build a connected fitness world.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12" style="align-items:center;">
+                <div class="col-span-6 split-anim">
+                    <img src="https://images.unsplash.com/photo-1510017803434-a899398421b3?q=80&w=1000&auto=format&fit=crop" class="logistics-img" alt="Tech">
+                </div>
+                <div class="col-span-6 split-anim" style="--hover-color:#FFD700;">
+                    <div class="t-label" style="--hover-color:#FFD700;">2010 - THE TURNING POINT</div>
+                    <h2 class="t-h1">FAIL FAST,<br>LEARN FASTER</h2>
+                    <p class="t-body-lg" style="margin-bottom: 2rem;">The <strong>Nike FuelBand</strong> failed commercially, but it taught Nike to act like a software company.</p>
+                    <div class="glass-panel" style="--hover-color:#FFD700;">
+                        <div class="t-h3">LESSON LEARNED</div>
+                        <p class="t-body">Utilize analytics and digital engagement rather than just selling hardware.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12">
+                <div class="col-span-12 split-anim" style="margin-bottom: 2rem; --hover-color:#FFBF00;">
+                    <div class="t-label" style="--hover-color:#FFBF00;">THE PLAYBOOK</div>
+                    <h2 class="t-h1">CONSUMER DIRECT OFFENSE</h2>
+                </div>
+                <div class="col-span-6 glass-panel split-anim" style="--hover-color:#FF4500;">
+                    <div class="t-h3">01. DIRECT TO CONSUMER</div>
+                    <p class="t-body">Shift toward D2C to own margin and experience.</p>
+                </div>
+                <div class="col-span-6 glass-panel split-anim" style="--hover-color:#FFFFFF;">
+                    <div class="t-h3">02. DATA & AI</div>
+                    <p class="t-body">Heavy investment in analytics.</p>
+                </div>
+                <div class="col-span-6 glass-panel split-anim" style="--hover-color:#BD00FF;">
+                    <div class="t-h3">03. MOBILE APPS</div>
+                    <p class="t-body">Creating a suite of integrated apps.</p>
+                </div>
+                <div class="col-span-6 glass-panel split-anim" style="--hover-color:#FF4500;">
+                    <div class="t-h3">04. SUPPLY SPEED</div>
+                    <p class="t-body">Digitizing the supply chain.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12">
+                <div class="col-span-12 split-anim" style="--hover-color:#BD00FF;"><h2 class="t-h1">THE APP FAMILY</h2></div>
+                
+                <div class="col-span-3 glass-panel split-anim" style="height: 400px; display:flex; flex-direction:column; justify-content:space-between; --hover-color:#ffffff;">
+                    <i class="fa-solid fa-bag-shopping fa-4x"></i>
+                    <div>
+                        <div class="t-h2">NIKE APP</div>
+                        <p class="t-body">Shopping & Member Rewards.</p>
+                    </div>
+                </div>
+                <div class="col-span-3 glass-panel split-anim" style="height: 400px; display:flex; flex-direction:column; justify-content:space-between; border-color:var(--c-accent); --hover-color:#FF4500;">
+                    <i class="fa-solid fa-fire fa-4x" style="color:var(--c-accent);"></i>
+                    <div>
+                        <div class="t-h2" style="color:var(--c-accent);">SNKRS</div>
+                        <p class="t-body">High-heat drops & culture hub.</p>
+                    </div>
+                </div>
+                <div class="col-span-3 glass-panel split-anim" style="height: 400px; display:flex; flex-direction:column; justify-content:space-between; border-color:var(--c-blue); --hover-color:#BD00FF;">
+                    <i class="fa-solid fa-person-running fa-4x" style="color:var(--c-blue);"></i>
+                    <div>
+                        <div class="t-h2" style="color:var(--c-blue);">NRC</div>
+                        <p class="t-body">Run Club tracking & coaching.</p>
+                    </div>
+                </div>
+                <div class="col-span-3 glass-panel split-anim" style="height: 400px; display:flex; flex-direction:column; justify-content:space-between; --hover-color:#FF4500;">
+                    <i class="fa-solid fa-dumbbell fa-4x"></i>
+                    <div>
+                        <div class="t-h2">NTC</div>
+                        <p class="t-body">Training programs & workouts.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12" style="align-items:center;">
+                <div class="col-span-6 split-anim" style="--hover-color:#BD00FF;">
+                    <h2 class="t-mega" style="font-size: 6rem; line-height:1;">DIGITAL<br>BRAIN</h2>
+                </div>
+                <div class="col-span-6 split-anim">
+                    <div class="glass-panel" style="--hover-color:#BD00FF;">
+                        <div class="t-h2">PREDICTIVE POWER</div>
+                        <ul class="tech-list">
+                            <li><i class="fa-solid fa-brain"></i> Predicts buying patterns to reduce markdowns.</li>
+                            <li><i class="fa-solid fa-location-dot"></i> Location-based stocking (Right product, right place).</li>
+                            <li><i class="fa-solid fa-wand-magic-sparkles"></i> Personalized suggestions.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12">
+                <div class="col-span-12 split-anim" style="--hover-color:#D946EF;">
+                    <div class="t-label" style="--hover-color:#D946EF;">BUYING INNOVATION</div>
+                    <h2 class="t-h1">TECH INVESTMENTS</h2>
+                </div>
+                <div class="col-span-4 glass-panel split-anim" style="--hover-color:#BD00FF;">
+                    <div class="t-h3" style="color:white; font-size:2rem;">ZODIAC</div>
+                    <div class="t-label" style="--hover-color:#BD00FF;">ANALYTICS</div>
+                    <p class="t-body">Customer lifetime value prediction.</p>
+                </div>
+                <div class="col-span-4 glass-panel split-anim" style="--hover-color:#FFFFFF;">
+                    <div class="t-h3" style="color:white; font-size:2rem;">CELECT</div>
+                    <div class="t-label" style="--hover-color:#FFFFFF;">AI PREDICTION</div>
+                    <p class="t-body">Demand sensing and inventory optimization.</p>
+                </div>
+                <div class="col-span-4 glass-panel split-anim" style="--hover-color:#BD00FF;">
+                    <div class="t-h3" style="color:white; font-size:2rem;">INVERTEX</div>
+                    <div class="t-label" style="--hover-color:#BD00FF;">COMPUTER VISION</div>
+                    <p class="t-body">3D Scanning (Became Nike Fit).</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12" style="align-items: center;">
+                <div class="col-span-6 split-anim">
+                    <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop" class="logistics-img" alt="Warehouse">
+                </div>
+                <div class="col-span-6 split-anim" style="padding-left: 2rem; --hover-color:#FF4500;">
+                    <h2 class="t-h1">SMART<br>LOGISTICS</h2>
+                    <ul class="tech-list">
+                        <li><i class="fa-solid fa-wifi"></i> <strong>RFID:</strong> Real-time global inventory visibility.</li>
+                        <li><i class="fa-solid fa-robot"></i> <strong>Robotics:</strong> Automated warehousing.</li>
+                        <li><i class="fa-solid fa-truck-fast"></i> <strong>Speed:</strong> Faster D2C delivery bypassing retail.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12">
+                <div class="col-span-5 split-anim" style="--hover-color:#FF4500;">
+                    <div class="t-label" style="--hover-color:#FF4500;">THE GAME CHANGER</div>
+                    <h2 class="t-h1">DIRECT<br>DOMINANCE</h2>
+                    <p class="t-body">Nike Direct now accounts for <strong>44%</strong> of total revenues.</p>
+                    <div class="t-mega" style="font-size: 8rem; color:var(--c-volt)">44%</div>
+                </div>
+                <div class="col-span-7 split-anim">
+                    <div class="glass-panel" style="padding-top: 5rem; --hover-color:#FF4500;">
+                        <div class="chart-container">
+                            <div class="bar-wrapper">
+                                <div class="bar-value">$18.7B</div>
+                                <div class="bar-visual" style="height: 60%; background: #444;"></div>
+                                <div class="t-h3" style="color:white; margin-top:1rem;">2022</div>
+                            </div>
+                            <div class="bar-wrapper">
+                                <div class="bar-value" style="color:var(--c-volt)">$21.3B</div>
+                                <div class="bar-visual active" style="height: 90%;"></div>
+                                <div class="t-h3" style="color:white; margin-top:1rem;">2023</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12">
+                <div class="col-span-12 split-anim" style="--hover-color:#FF4500;"><h2 class="t-h1">REVENUE EXPLOSION</h2></div>
+                <div class="col-span-6 split-anim">
+                    <div class="glass-panel" style="padding-top: 5rem; --hover-color:#FF4500;">
+                        <div class="chart-container">
+                            <div class="bar-wrapper">
+                                <div class="bar-value">$19B</div>
+                                <div class="bar-visual" style="height: 35%; background: #444;"></div>
+                                <div class="t-h3" style="color:white; margin-top:1rem;">2010</div>
+                            </div>
+                            <div class="bar-wrapper">
+                                <div class="bar-value" style="color:var(--c-volt)">$51.2B</div>
+                                <div class="bar-visual active" style="height: 100%;"></div>
+                                <div class="t-h3" style="color:white; margin-top:1rem;">2023</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-6 split-anim" style="display:flex; flex-direction:column; justify-content:center; padding-left:3rem;">
+                    <div class="t-mega" style="color:var(--c-volt)">+169%</div>
+                    <h3 class="t-h2">GROWTH (13 YEARS)</h3>
+                    <p class="t-body-lg">Nike transformed into a data-driven, digital-first company.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12">
+                <div class="col-span-12 split-anim text-center" style="--hover-color:#FACC15;">
+                    <div class="t-label justify-center" style="--hover-color:#FACC15;">LEADERSHIP 2025</div>
+                    <h2 class="t-h1">ARCHITECTS OF CHANGE</h2>
+                </div>
+                
+                <div class="col-span-4 split-anim">
+                    <div class="glass-panel exec-card" style="--hover-color:#ffffff;">
+                        <div class="exec-img-box">
+                            <img src="https://i.ibb.co/vFkPZ6B/filters-quality-85.webp" alt="CEO">
+                        </div>
+                        <h3 class="t-h2" style="font-size:1.8rem;">ELLIOTT HILL</h3>
+                        <p class="t-label justify-center" style="--hover-color:#ffffff;">PRESIDENT & CEO</p>
+                    </div>
+                </div>
+                
+                <div class="col-span-4 split-anim">
+                    <div class="glass-panel exec-card" style="--hover-color:#ffffff;">
+                        <div class="exec-img-box">
+                            <img src="https://i.ibb.co/Fb48W6Kj/heidi-o-neill-111-jpg-1653316131.webp" alt="President">
+                        </div>
+                        <h3 class="t-h2" style="font-size:1.8rem;">HEIDI O'NEILL</h3>
+                        <p class="t-label justify-center" style="--hover-color:#ffffff;">PRESIDENT, CONSUMER</p>
+                    </div>
+                </div>
+
+                <div class="col-span-4 split-anim">
+                    <div class="glass-panel exec-card" style="--hover-color:#ffffff;">
+                        <div class="exec-img-box">
+                            <img src="https://i.ibb.co/yBbZfbmx/NXTL-2024-Craig-Williams-1.webp" alt="President Geo">
+                        </div>
+                        <h3 class="t-h2" style="font-size:1.8rem;">CRAIG WILLIAMS</h3>
+                        <p class="t-label justify-center" style="--hover-color:#ffffff;">PRESIDENT, GEOGRAPHIES</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12">
+                <div class="col-span-12 split-anim" style="--hover-color:#F43F5E;">
+                    <h2 class="t-h1">THE SQUAD</h2>
+                </div>
+                <div class="col-span-2 squad-card glass-panel split-anim" style="--hover-color:#FFD700;">
+                    <i class="fa-solid fa-chess-king squad-bg-icon"></i>
+                    <div class="squad-info">
+                        <div class="t-h3" style="color:white; margin-bottom:0;">Akkshhej Rawatt</div>
+                        <div class="squad-role">TEAM LEAD</div>
+                    </div>
+                </div>
+                <div class="col-span-2 squad-card glass-panel split-anim" style="--hover-color:#FFFFFF;">
+                    <i class="fa-solid fa-wand-magic-sparkles squad-bg-icon"></i>
+                    <div class="squad-info">
+                        <div class="t-h3" style="color:white; margin-bottom:0;">Giriraj Agarwal</div>
+                        <div class="squad-role">INTERACTIVE DESIGN</div>
+                    </div>
+                </div>
+                <div class="col-span-2 squad-card glass-panel split-anim" style="--hover-color:#BD00FF;">
+                    <i class="fa-solid fa-gem squad-bg-icon"></i>
+                    <div class="squad-info">
+                        <div class="t-h3" style="color:white; margin-bottom:0;">Divyansh Gupta</div>
+                        <div class="squad-role">THE VIP</div>
+                    </div>
+                </div>
+                <div class="col-span-2 squad-card glass-panel split-anim" style="--hover-color:#FF0055;">
+                    <i class="fa-solid fa-tag squad-bg-icon"></i>
+                    <div class="squad-info">
+                        <div class="t-h3" style="color:white; margin-bottom:0;">Himang Porwal</div>
+                        <div class="squad-role">LIMITED EDITION</div>
+                    </div>
+                </div>
+                <div class="col-span-2 squad-card glass-panel split-anim" style="--hover-color:#FFFFFF;">
+                    <i class="fa-solid fa-robot squad-bg-icon"></i>
+                    <div class="squad-info">
+                        <div class="t-h3" style="color:white; margin-bottom:0;">Aditya Agarwal</div>
+                        <div class="squad-role">SCRIPT ROBOT</div>
+                    </div>
+                </div>
+                <div class="col-span-2 squad-card glass-panel split-anim" style="--hover-color:#FFFFFF;">
+                    <i class="fa-solid fa-music squad-bg-icon"></i>
+                    <div class="squad-info">
+                        <div class="t-h3" style="color:white; margin-bottom:0;">Akshat Kashyap</div>
+                        <div class="squad-role">VIBE CONTRIBUTOR</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12">
+                <div class="col-span-12 split-anim text-center" style="--hover-color:#FF003C;">
+                    <h2 class="t-h1">THE HURDLES</h2>
+                    <p class="t-body">Transformation was not easy.</p>
+                </div>
+                <div class="col-span-6 glass-panel split-anim" style="--hover-color:#FF003C;">
+                    <ul class="tech-list">
+                        <li><i class="fa-solid fa-xmark"></i> Resistance to new tech (Culture Clash).</li>
+                        <li><i class="fa-solid fa-xmark"></i> High cost of digital infrastructure.</li>
+                        <li><i class="fa-solid fa-xmark"></i> Cybersecurity & privacy risks.</li>
+                    </ul>
+                </div>
+                <div class="col-span-6 glass-panel split-anim" style="--hover-color:#FF003C;">
+                    <div class="t-h3">TAKEAWAY</div>
+                    <p class="t-body">Nike had to balance technology with its sports-driven heritage. It required massive cultural shifts.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide-section">
+            <div class="grid-12" style="text-align: center;">
+                <div class="col-span-12 split-anim" style="--hover-color:#A855F7;">
+                    <h1 class="t-mega">FUTURE<br>READY</h1>
+                    <div class="t-body-lg" style="margin: 2rem auto; border-top: 1px solid #333; padding-top:2rem;">
+                        "Nike evolved from a shoe manufacturer into a tech-powered sports company."
+                    </div>
+                </div>
+                <div class="col-span-12 split-anim" style="display:flex; gap:20px; justify-content:center;">
+                    <div class="glass-panel" style="--hover-color:#FFFFFF;">AI Design</div>
+                    <div class="glass-panel" style="--hover-color:#BD00FF;">Metaverse</div>
+                    <div class="glass-panel" style="--hover-color:#FF4500;">Hyper-Personal</div>
+                </div>
+                <div class="col-span-12 split-anim" style="margin-top: 4rem;">
+                    <button class="replay-btn" onclick="location.reload()">
+                        REPLAY SYSTEM
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // =============================================================================
+        // 1. LOADER LOGIC (ORIGINAL)
+        // =============================================================================
+        class TextScramble {
+            constructor(el) {
+                this.el = el;
+                this.chars = '!<>-_\\\\/[]{}—=+*^?#________';
+                this.update = this.update.bind(this);
+            }
+            setText(newText) {
+                const oldText = this.el.innerText;
+                const length = Math.max(oldText.length, newText.length);
+                const promise = new Promise((resolve) => this.resolve = resolve);
+                this.queue = [];
+                for (let i = 0; i < length; i++) {
+                    const from = oldText[i] || '';
+                    const to = newText[i] || '';
+                    const start = Math.floor(Math.random() * 40);
+                    const end = start + Math.floor(Math.random() * 40);
+                    this.queue.push({ from, to, start, end });
+                }
+                cancelAnimationFrame(this.frameRequest);
+                this.frame = 0;
+                this.update();
+                return promise;
+            }
+            update() {
+                let output = '';
+                let complete = 0;
+                for (let i = 0, n = this.queue.length; i < n; i++) {
+                    let { from, to, start, end, char } = this.queue[i];
+                    if (this.frame >= end) {
+                        complete++;
+                        output += to;
+                    } else if (this.frame >= start) {
+                        if (!char || Math.random() < 0.28) {
+                            char = this.randomChar();
+                            this.queue[i].char = char;
+                        }
+                        output += \`<span class="dud">\${char}</span>\`;
+                    } else {
+                        output += from;
+                    }
+                }
+                this.el.innerHTML = output;
+                this.el.setAttribute('data-text', this.el.innerText);
+                if (complete === this.queue.length) {
+                    this.resolve();
+                } else {
+                    this.frameRequest = requestAnimationFrame(this.update);
+                    this.frame++;
+                }
+            }
+            randomChar() {
+                return this.chars[Math.floor(Math.random() * this.chars.length)];
+            }
+        }
+
+        // =============================================================================
+        // 2. PREMIUM SHADER BACKGROUND
+        // =============================================================================
+        let scene, camera, renderer, material;
+        
+        const palettes = {
+            default: { c1: '#000000', c2: '#1a2005' }, // Dark Volt
+            legacy:  { c1: '#1a0500', c2: '#330a00' }, // Dark Orange
+            tech:    { c1: '#000a1a', c2: '#001433' }, // Deep Blue
+            alert:   { c1: '#1a0000', c2: '#330000' }, // Deep Red
+            logistics:{c1: '#111111', c2: '#222222' }  // Grey
+        };
+
+        const slideColorMap = [
+            palettes.default, 
+            palettes.legacy,  
+            palettes.legacy,  
+            palettes.alert,   
+            palettes.default, 
+            palettes.default, 
+            palettes.default, 
+            palettes.tech,    
+            palettes.tech,    
+            palettes.tech,    
+            palettes.logistics,
+            palettes.default, 
+            palettes.default, 
+            palettes.default, 
+            palettes.legacy,  
+            palettes.alert,   
+            palettes.default  
+        ];
+
+        const vertexShader = \`
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        \`;
+
+        const fragmentShader = \`
+            uniform float uTime;
+            uniform vec3 uColor1;
+            uniform vec3 uColor2;
+            varying vec2 vUv;
+            vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+            float snoise(vec2 v){
+                const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                vec2 i  = floor(v + dot(v, C.yy) );
+                vec2 x0 = v -   i + dot(i, C.xx);
+                vec2 i1;
+                i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                vec4 x12 = x0.xyxy + C.xxzz;
+                x12.xy -= i1;
+                i = mod(i, 289.0);
+                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                m = m*m ;
+                m = m*m ;
+                vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                vec3 h = abs(x) - 0.5;
+                vec3 ox = floor(x + 0.5);
+                vec3 a0 = x - ox;
+                m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+                vec3 g;
+                g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                return 130.0 * dot(m, g);
+            }
+            void main() {
+                float noiseVal = snoise(vUv * 3.0 + uTime * 0.1);
+                float mixStrength = smoothstep(-0.5, 0.5, noiseVal + (vUv.y - 0.5));
+                vec3 finalColor = mix(uColor1, uColor2, mixStrength);
+                float grain = fract(sin(dot(vUv, vec2(12.9898,78.233))) * 43758.5453);
+                finalColor += grain * 0.04;
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        \`;
+
+        function initShader() {
+            const container = document.getElementById('shader-container');
+            if(!container) return;
+
+            scene = new THREE.Scene();
+            camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            
+            renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.PlaneGeometry(2, 2);
+            
+            material = new THREE.ShaderMaterial({
+                vertexShader,
+                fragmentShader,
+                uniforms: {
+                    uTime: { value: 0 },
+                    uColor1: { value: new THREE.Color(palettes.default.c1) },
+                    uColor2: { value: new THREE.Color(palettes.default.c2) }
+                }
+            });
+
+            const plane = new THREE.Mesh(geometry, material);
+            scene.add(plane);
+
+            animateShader();
+        }
+
+        function animateShader() {
+            requestAnimationFrame(animateShader);
+            material.uniforms.uTime.value += 0.01;
+            renderer.render(scene, camera);
+        }
+
+        function updateShaderColors(index) {
+            const palette = slideColorMap[index] || palettes.default;
+            gsap.to(material.uniforms.uColor1.value, {
+                r: new THREE.Color(palette.c1).r,
+                g: new THREE.Color(palette.c1).g,
+                b: new THREE.Color(palette.c1).b,
+                duration: 1.5,
+                ease: "power2.inOut"
+            });
+            gsap.to(material.uniforms.uColor2.value, {
+                r: new THREE.Color(palette.c2).r,
+                g: new THREE.Color(palette.c2).g,
+                b: new THREE.Color(palette.c2).b,
+                duration: 1.5,
+                ease: "power2.inOut"
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            if(!renderer) return;
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // =============================================================================
+        // 3. MAIN PRESENTATION LOGIC
+        // =============================================================================
+        const slides = document.querySelectorAll('.slide-section');
+        const totalSlides = slides.length;
+        let currentIndex = 0;
+        let isAnimating = false;
+
+        function initApp() {
+            initShader(); 
+            updateHUD();
+            animateSlideIn(0);
+
+            Observer.create({
+                target: window,
+                type: "wheel,touch,pointer",
+                wheelSpeed: 1, 
+                onUp: () => handleScroll(-1),
+                onDown: () => handleScroll(1),
+                tolerance: 10,
+                preventDefault: true
+            });
+
+            // Keyboard Navigation Logic
+            document.addEventListener('keydown', (e) => {
+                if(e.key === 'ArrowDown' || e.key === 'ArrowRight') handleScroll(1);
+                if(e.key === 'ArrowUp' || e.key === 'ArrowLeft') handleScroll(-1);
+            });
+        }
+
+        function handleScroll(dir) {
+            if (isAnimating) return;
+            const nextIndex = currentIndex + dir;
+            if (nextIndex >= 0 && nextIndex < totalSlides) {
+                goToSlide(nextIndex, dir);
+            }
+        }
+
+        function goToSlide(index, dir) {
+            isAnimating = true;
+            const current = slides[currentIndex];
+            const next = slides[index];
+            currentIndex = index;
+            
+            updateHUD();
+            updateShaderColors(index);
+
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    isAnimating = false;
+                    current.classList.remove('active');
+                }
+            });
+
+            tl.to(current.querySelectorAll('.split-anim'), {
+                y: -100 * dir,
+                opacity: 0,
+                duration: 0.6,
+                stagger: 0.05,
+                ease: "power2.in"
+            });
+            
+            tl.to(current, { opacity: 0, duration: 0.4 }, "-=0.2");
+
+            next.classList.add('active');
+            tl.fromTo(next, { opacity: 0 }, { opacity: 1, duration: 0.1 });
+            
+            tl.fromTo(next.querySelectorAll('.split-anim'), 
+                { y: 100 * dir, opacity: 0 },
+                { y: 0, opacity: 1, duration: 0.8, stagger: 0.05, ease: "power2.out" }
+            );
+
+            const bars = next.querySelectorAll('.bar-visual');
+            if(bars.length) {
+                tl.fromTo(bars, { scaleY: 0 }, { scaleY: 1, duration: 1, stagger: 0.2, ease: "power3.out" }, "-=0.5");
+                tl.to(next.querySelectorAll('.bar-value'), { opacity: 1, y: 0, duration: 0.5 }, "-=0.2");
+            }
+        }
+
+        function animateSlideIn(index) {
+            const slide = slides[index];
+            slide.classList.add('active');
+            gsap.to(slide, { opacity: 1 });
+            gsap.fromTo(slide.querySelectorAll('.split-anim'), 
+                { y: 50, opacity: 0 }, 
+                { y: 0, opacity: 1, duration: 1, stagger: 0.1, delay: 0.2, ease: "power2.out" }
+            );
+        }
+
+        function updateHUD() {
+            document.getElementById('curr-slide-disp').innerText = (currentIndex + 1).toString().padStart(2, '0');
+            const progress = ((currentIndex + 1) / totalSlides) * 100;
+            document.getElementById('progress-bar').style.width = \`\${progress}%\`;
+        }
+
+        // =============================================================================
+        // 3.5 NAVIGATION LOGIC (QUICK JUMP)
+        // =============================================================================
+        function toggleNav() {
+            const nav = document.getElementById('nav-overlay');
+            nav.classList.toggle('active');
+        }
+
+        function jumpTo(index) {
+            if(index === currentIndex) {
+                toggleNav();
+                return;
+            }
+            // Calculate direction
+            const dir = index > currentIndex ? 1 : -1;
+            toggleNav();
+            goToSlide(index, dir);
+        }
+
+        // =============================================================================
+        // 4. MOUSE CURSOR LOGIC
+        // =============================================================================
+        const dot = document.querySelector('.cursor-dot');
+        const ring = document.querySelector('.cursor-ring');
+        
+        window.addEventListener('mousemove', (e) => {
+            gsap.to(dot, { x: e.clientX, y: e.clientY, duration: 0.1 });
+            gsap.to(ring, { x: e.clientX, y: e.clientY, duration: 0.2 });
+        });
+
+        document.addEventListener('mouseover', (e) => {
+            if(e.target.closest('button, .glass-panel, .squad-card, .exec-card, .hud-slide-counter, .nav-item, .logistics-img')) {
+                document.body.classList.add('hovering');
+            } else {
+                document.body.classList.remove('hovering');
+            }
+        });
+
+        // =============================================================================
+        // 5. INITIALIZATION SEQUENCE
+        // =============================================================================
+        window.addEventListener('load', () => {
+            gsap.registerPlugin(Observer);
+            
+            const el = document.querySelector('.glitch-text');
+            const fx = new TextScramble(el);
+
+            gsap.to(".loader-line-fill", { width: "100%", duration: 4.0, ease: "linear" });
+
+            fx.setText('INITIALIZING...').then(() => {
+                setTimeout(() => {
+                    fx.setText('JUST DO IT.').then(() => {
+                        setTimeout(() => {
+                            el.classList.remove('is-glitching');
+                            el.classList.add('is-static'); 
+                            
+                            setTimeout(() => {
+                                gsap.to("#loader", {
+                                    yPercent: -100, 
+                                    duration: 1.2, 
+                                    ease: "power4.inOut",
+                                    onComplete: initApp
+                                });
+                            }, 1000); 
+                        }, 500);
+                    });
+                }, 1000);
+            });
+        });
+
+    <\/script>
+</body>
+</html>
+    </script>
+
+    <script>
+        // =============================================================================
+        // 1. EXTRACT RAW SOURCE FROM SCRIPT TAG
+        // =============================================================================
+        // This is the safest method. It grabs the text inside the script tag above
+        // without executing it, ensuring no JS conflicts.
+        const RAW_SOURCE = document.getElementById('raw-data-source').textContent;
+
+        // =============================================================================
+        // 2. SYNTAX HIGHLIGHTING (SIMPLE)
+        // =============================================================================
+        function highlightCode(code) {
+            let html = code
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"(.*?)"/g, '<span class="token-string">"$1"</span>')
+                .replace(/&lt;(\/?[a-z0-9]+)(.*?)&gt;/gi, function(match, tag, attrs) {
+                    return '&lt;<span class="token-tag">' + tag + '</span>' + 
+                           attrs.replace(/([a-z-]+)=/gi, '<span class="token-attr"> $1</span>=') + '&gt;';
+                })
+                .replace(/\/\*([\s\S]*?)\*\//g, '<span class="token-comment">/*$1*/</span>');
+            return html;
+        }
+
+        // Render code to screen
+        document.getElementById('code-display').innerHTML = highlightCode(RAW_SOURCE);
+
+        // =============================================================================
+        // 3. BACKGROUND ANIMATION (RED/GOLD THEME)
+        // =============================================================================
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2;
+                // Randomly Red or Gold
+                this.color = Math.random() > 0.8 ? '#FFD700' : '#FF2A2A'; 
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if(this.x < 0) this.x = width;
+                if(this.x > width) this.x = 0;
+                if(this.y < 0) this.y = height;
+                if(this.y > height) this.y = 0;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for(let i=0; i<100; i++) particles.push(new Particle());
+
+        function animateBg() {
+            ctx.clearRect(0,0,width,height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            // Draw connections
+            ctx.strokeStyle = 'rgba(255, 42, 42, 0.1)';
+            for(let i=0; i<particles.length; i++) {
+                for(let j=i+1; j<particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < 100) {
+                        ctx.lineWidth = 1 - (dist/100);
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
+
+        // =============================================================================
+        // 4. PREVIEW LOGIC
+        // =============================================================================
+        const modal = document.getElementById('preview-modal');
+        const frame = document.getElementById('preview-frame');
+
+        function runSimulation() {
+            // Create a Blob from the RAW_SOURCE string
+            // Use the textContent of the script tag which has safe, correct code
+            const blob = new Blob([RAW_SOURCE], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            frame.src = url;
+            modal.classList.add('active');
+        }
+
+        function closeSimulation() {
+            modal.classList.remove('active');
+            setTimeout(() => {
+                frame.src = ''; // Clear frame to stop sound/video
+            }, 800);
+        }
+
+    </script>
+</body>
+</html>
